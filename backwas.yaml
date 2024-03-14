@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: wasapp
-        image: sooyounkim/wasserver:30
+        image: sooyounkim/jenkins:30
         ports:
         - containerPort: 8080
         - containerPort: 3306
