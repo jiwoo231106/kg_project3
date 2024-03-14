@@ -9,7 +9,7 @@ pipeline {
   // 레포지토리가 없으면 생성됨
   // Credential들에는 젠킨스 크레덴셜에서 설정한 ID를 사용
   environment {
-    dockerHubRegistry = 'sooyounkim/wasserver' 
+    dockerHubRegistry = 'sooyounkim/jenkins' 
     dockerHubRegistryCredential = 'docker_hub' 
     githubCredential = 'git_hub'
     gitEmail = 'jwk231106@gmail.com'
@@ -49,39 +49,63 @@ pipeline {
         }
       }
     }
-  stage('Docker Image Pull') {
-  steps {
-    // 젠킨스에 등록한 크레덴셜로 도커 허브에 이미지 풀
-    withDockerRegistry(credentialsId: dockerHubRegistryCredential, url: '') {
-      sh "docker pull ${dockerHubRegistry}:30"
-      sh "docker pull ${dockerHubRegistry}:latest"
-    } 
-  }
-
-  post {
-    failure {
-      echo 'Docker Image Pull failure'
-      // 이미지 풀에 실패한 경우에 대한 처리
+    stage('Docker Image Build') {
+      steps {
+        // 도커 이미지를 빌드하며 빌드한 횟수에 따라 순차적으로 증가하는 젠킨스 자체 변수를 태그로 자동 지정한다.
+        sh "docker build ./docker -t ${dockerHubRegistry}:${currentBuild.number}"
+        sh "docker build ./docker -t ${dockerHubRegistry}:latest"
+      }
+      // 성공, 실패 시 슬랙에 알람오도록 설정
+      post {
+        failure {
+          echo 'Docker image build failure'
+          slackSend (color: '#FF0000', message: "FAILED: Docker Image Build '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+        success {
+          echo 'Docker image build success'
+          slackSend (color: '#0AC9FF', message: "SUCCESS: Docker Image Build '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+      }
+    }  
+    stage('Docker Image Push') {
+      steps {
+        // 젠킨스에 등록한 크레덴셜로 도커 허브에 이미지 푸시
+        withDockerRegistry(credentialsId: dockerHubRegistryCredential, url: '') {
+          sh "docker push ${dockerHubRegistry}:${currentBuild.number}"
+          sh "docker push ${dockerHubRegistry}:latest"
+          // 10초 쉰 후에 다음 작업을 이어나가도록 함
+          sleep 10
+        } 
+      }
+ 
+      post {
+        failure {
+          echo 'Docker Image Push failure'
+          sh "docker rmi ${dockerHubRegistry}:${currentBuild.number}"
+          sh "docker rmi ${dockerHubRegistry}:latest"
+          slackSend (color: '#FF0000', message: "FAILED: Docker Image Push '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+        success {
+          echo 'Docker Image Push success'
+          sh "docker rmi ${dockerHubRegistry}:${currentBuild.number}"
+          sh "docker rmi ${dockerHubRegistry}:latest"
+          slackSend (color: '#0AC9FF', message: "SUCCESS: Docker Image Push '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
+        }
+      }
     }
-    success {
-      echo 'Docker Image Pull success'
-      // 이미지 풀에 성공한 경우에 대한 처리
-    }
-  }
-}
     stage('K8S Manifest Update') {
       steps {
         // git 계정 로그인, 해당 레포지토리의 main 브랜치에서 클론
-        git credentialsId: git_hub,
-            url: 'https://github.com/jiwoo231106/kg_project3.git',
+        git credentialsId: githubCredential,
+            url: https://github.com/jiwoo231106/kg_project3.git',
             branch: 'master'  
  
         // 이미지 태그 변경 후 메인 브랜치에 푸시
         sh "git config --global user.email ${gitEmail}"
         sh "git config --global user.name ${gitName}"
-        sh "sed -i 's/wasserver:.*/wasserver:30/g' ./backwas.yaml"
+        sh "sed -i 's/tomcat:.*/tomcat:${currentBuild.number}/g' ./backwas.yaml"
         sh "git add ."
-        sh "git commit -m 'fix:${dockerHubRegistry} 30 image versioning'"
+        sh "git commit -m 'fix:${dockerHubRegistry} ${currentBuild.number} image versioning'"
         sh "git branch -M master"
         sh "git remote remove origin"
         sh "git remote add origin git@github.com:jiwoo231106/kg_project3.git"
@@ -98,6 +122,3 @@ pipeline {
         }
       }
     }
- 
-  }
-}
