@@ -15,26 +15,6 @@ pipeline {
     gitEmail = 'jwk231106@gmail.com'
     gitName = 'jiwoo231106'
   }
- stage('Docker Image Pull') {
-  steps {
-    // 젠킨스에 등록한 크레덴셜로 도커 허브에 이미지 풀
-    withDockerRegistry(credentialsId: dockerHubRegistryCredential, url: '') {
-      sh "docker pull ${dockerHubRegistry}:30"
-      sh "docker pull ${dockerHubRegistry}:latest"
-    } 
-  }
-
-  post {
-    failure {
-      echo 'Docker Image Pull failure'
-      // 이미지 풀에 실패한 경우에 대한 처리
-    }
-    success {
-      echo 'Docker Image Pull success'
-      // 이미지 풀에 성공한 경우에 대한 처리
-    }
-  }
-}
 
   stages {
  
@@ -69,7 +49,26 @@ pipeline {
         }
       }
     }
- 
+  stage('Docker Image Pull') {
+  steps {
+    // 젠킨스에 등록한 크레덴셜로 도커 허브에 이미지 풀
+    withDockerRegistry(credentialsId: dockerHubRegistryCredential, url: '') {
+      sh "docker pull ${dockerHubRegistry}:30"
+      sh "docker pull ${dockerHubRegistry}:latest"
+    } 
+  }
+
+  post {
+    failure {
+      echo 'Docker Image Pull failure'
+      // 이미지 풀에 실패한 경우에 대한 처리
+    }
+    success {
+      echo 'Docker Image Pull success'
+      // 이미지 풀에 성공한 경우에 대한 처리
+    }
+  }
+}
     stage('K8S Manifest Update') {
       steps {
         // git 계정 로그인, 해당 레포지토리의 main 브랜치에서 클론
