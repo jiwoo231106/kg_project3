@@ -70,7 +70,7 @@ pipeline {
     stage('Docker Image Push') {
       steps {
         // 젠킨스에 등록한 계정으로 도커 허브에 이미지 푸시
-        withDockerRegistry(credentialsId: docker_hub, url: '') {
+        withDockerRegistry(credentialsId: dockerHubRegistryCredential, url: '') {
           sh "docker push ${dockerHubRegistry}:${currentBuild.number}"
           // 10초 쉰 후에 다음 작업 이어나가도록 함
           sleep 10
