@@ -53,7 +53,6 @@ pipeline {
       steps {
         // 도커 이미지 빌드
         sh "docker build . -t ${dockerHubRegistry}:${currentBuild.number}"
-        sh "docker build . -t ${dockerHubRegistry}:latest"
       }
       // 성공, 실패 시 슬랙에 알람오도록 설정
       post {
