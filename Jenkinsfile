@@ -94,7 +94,7 @@ pipeline {
     stage('K8S Manifest Update') {
       steps {
         // git 계정 로그인, 해당 레포지토리의 main 브랜치에서 클론
-        git credentialsId: git_hub,
+        git credentialsId: githubCredential,
             url: 'https://github.com/jiwoo231106/kg_project3.git',
             branch: 'master'  
  
