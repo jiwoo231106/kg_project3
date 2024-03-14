@@ -15,7 +15,27 @@ pipeline {
     gitEmail = 'jwk231106@gmail.com'
     gitName = 'jiwoo231106'
   }
- 
+ stage('Docker Image Pull') {
+  steps {
+    // 젠킨스에 등록한 크레덴셜로 도커 허브에 이미지 풀
+    withDockerRegistry(credentialsId: dockerHubRegistryCredential, url: '') {
+      sh "docker pull ${dockerHubRegistry}:30"
+      sh "docker pull ${dockerHubRegistry}:latest"
+    } 
+  }
+
+  post {
+    failure {
+      echo 'Docker Image Pull failure'
+      // 이미지 풀에 실패한 경우에 대한 처리
+    }
+    success {
+      echo 'Docker Image Pull success'
+      // 이미지 풀에 성공한 경우에 대한 처리
+    }
+  }
+}
+
   stages {
  
     // 깃허브 계정으로 레포지토리를 클론한다.
@@ -60,9 +80,9 @@ pipeline {
         // 이미지 태그 변경 후 메인 브랜치에 푸시
         sh "git config --global user.email ${gitEmail}"
         sh "git config --global user.name ${gitName}"
-        sh "sed -i 's/tomcat:.*/tomcat:${currentBuild.number}/g' deploy/production.yaml"
+        sh "sed -i 's/wasserver:.*/wasserver:30/g' ./backwas.yaml"
         sh "git add ."
-        sh "git commit -m 'fix:${dockerHubRegistry} ${currentBuild.number} image versioning'"
+        sh "git commit -m 'fix:${dockerHubRegistry} 30 image versioning'"
         sh "git branch -M master"
         sh "git remote remove origin"
         sh "git remote add origin git@github.com:jiwoo231106/kg_project3.git"
