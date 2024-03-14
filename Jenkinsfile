@@ -72,7 +72,6 @@ pipeline {
         // 젠킨스에 등록한 계정으로 도커 허브에 이미지 푸시
         withDockerRegistry(credentialsId: docker_hub, url: '') {
           sh "docker push ${dockerHubRegistry}:${currentBuild.number}"
-          sh "docker push ${dockerHubRegistry}:latest"
           // 10초 쉰 후에 다음 작업 이어나가도록 함
           sleep 10
         } 
@@ -82,7 +81,6 @@ pipeline {
         failure {
           echo 'Docker Image Push failure'
           sh "docker rmi ${dockerHubRegistry}:${currentBuild.number}"
-          sh "docker rmi ${dockerHubRegistry}:latest"
           slackSend (color: '#FF0000', message: "FAILED: Docker Image Push '${env.JOB_NAME} [${env.BUILD_NUMBER}]' (${env.BUILD_URL})")
         }
         success {
