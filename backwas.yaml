@@ -1,0 +1,43 @@
+#deploy_생성
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backdeploy
+spec:
+  selector:
+    matchLabels:
+      app: red
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: red
+    spec:
+      containers:
+      - name: wasapp
+        image: sooyounkim/wasserver:30
+        ports:
+        - containerPort: 8080
+        - containerPort: 3306
+        - containerPort: 6600
+        env:
+        - name: "APP_COLOR"
+          value: "red"
+...
+---
+# service_수정
+apiVersion: v1
+kind: Service
+metadata:
+  name: backservice
+spec:
+  selector:
+    app: red
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: ClusterIP  # NodePort에서 ClusterIP로 변경
+...
+

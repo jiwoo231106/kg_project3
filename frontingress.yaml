@@ -1,0 +1,25 @@
+#ingress_생성
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: frontingress
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-west-2:590183675841:certificate/4174192c-b073-4743-81fe-dc019a7cbfa4"
+    #    alb.ingress.kubernetes.io/security-groups: "sg-0a05a4e962c52e143"
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: frontservice
+              port:
+                number: 80
+...

@@ -1,0 +1,42 @@
+#deploy_생성
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontdeploy
+spec:
+  selector:
+    matchLabels:
+      app: blue
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: blue
+    spec:
+      containers:
+      - name: webapp
+        image: sooyounkim/webserver:22
+        ports:
+        - containerPort: 80
+        - containerPort: 6600
+        env:
+        - name: "APP_COLOR"
+          value: "blue"
+...
+#service_생성
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontservice
+spec:
+  selector:
+    app: blue
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+  type: NodePort
+...
+
